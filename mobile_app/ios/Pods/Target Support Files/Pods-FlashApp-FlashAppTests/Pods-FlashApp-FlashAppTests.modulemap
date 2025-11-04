@@ -1,0 +1,6 @@
+module Pods_FlashApp_FlashAppTests {
+  umbrella header "Pods-FlashApp-FlashAppTests-umbrella.h"
+
+  export *
+  module * { export * }
+}

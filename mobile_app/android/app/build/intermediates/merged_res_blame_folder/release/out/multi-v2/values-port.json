@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.flashapp-mergeReleaseResources-29:/values-port/values-port.xml",
+            "map": [
+                {
+                    "source": "/Users/chomwashikati/.gradle/caches/transforms-3/f7c5e03387f63f3788dbd5294d085d57/transformed/appcompat-1.4.1/res/values-port/values-port.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "55",
+                        "endOffsets": "106"
+                    }
+                }
+            ]
+        }
+    ]
+}
