@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, CardSelectionModal } from '../../ui';
 import { VIRAL_CARDS } from '../../ui/ViralCard';
-import { transactionsAPI } from '../../services/api';
+import { transactionsAPI, contactsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { NetworkService } from '../../services/networkService';
 
@@ -47,7 +47,30 @@ export default function SendMoneyScreen() {
   const loadContacts = async () => {
     setLoadingContacts(true);
     try {
-      // For demo purposes, use mock contacts
+      console.log('📇 Loading contacts from backend...');
+
+      // Try to fetch contacts from backend
+      const backendContacts = await contactsAPI.getContacts();
+      console.log('✅ Backend contacts loaded:', backendContacts.length, 'contacts');
+
+      // Transform backend contacts to Contact format
+      const transformedContacts: Contact[] = backendContacts.map((contact: any) => ({
+        recordID: contact.id || String(Math.random()),
+        displayName: contact.contact_name || contact.name || 'Unknown',
+        phoneNumbers: [{
+          number: contact.contact_phone || contact.phone || '',
+          label: 'mobile'
+        }]
+      }));
+
+      setContacts(transformedContacts);
+      setShowContacts(true);
+      console.log('✅ Contacts transformed and set:', transformedContacts.length);
+
+    } catch (error) {
+      console.error('❌ Failed to load contacts from backend:', error);
+
+      // Fallback to mock contacts for demo if backend fails
       const mockContacts: Contact[] = [
         {
           recordID: '1',
@@ -55,35 +78,26 @@ export default function SendMoneyScreen() {
           phoneNumbers: [{ number: '+260971234567', label: 'mobile' }]
         },
         {
-          recordID: '2', 
+          recordID: '2',
           displayName: 'Sarah Banda',
           phoneNumbers: [{ number: '+260977654321', label: 'mobile' }]
         },
         {
           recordID: '3',
-          displayName: 'Peter Phiri', 
+          displayName: 'Peter Phiri',
           phoneNumbers: [{ number: '+260965551234', label: 'mobile' }]
-        },
-        {
-          recordID: '4',
-          displayName: 'Mary Lungu',
-          phoneNumbers: [{ number: '+260979876543', label: 'mobile' }]
-        },
-        {
-          recordID: '5',
-          displayName: 'James Chipeta',
-          phoneNumbers: [{ number: '+260966123456', label: 'mobile' }]
         }
       ];
-      
-      setTimeout(() => {
-        setContacts(mockContacts);
-        setShowContacts(true);
-        setLoadingContacts(false);
-      }, 500); // Simulate loading
-      
-    } catch (error) {
-      Alert.alert('Error', 'Unable to load contacts. Please enter phone number manually.');
+
+      setContacts(mockContacts);
+      setShowContacts(true);
+
+      Alert.alert(
+        'Contacts Unavailable',
+        'Could not load your saved contacts. Showing sample contacts. You can still enter a phone number manually.',
+        [{ text: 'OK' }]
+      );
+    } finally {
       setLoadingContacts(false);
     }
   };

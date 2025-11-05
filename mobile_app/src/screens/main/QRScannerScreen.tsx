@@ -80,15 +80,15 @@ export default function QRScannerScreen() {
     setTimeout(() => setScanned(false), 2000);
   };
 
-  // Mock QR code detection for demo
+  // TODO: Implement real camera QR scanning
+  // This requires react-native-vision-camera or react-native-camera integration
+  // For now, users can manually enter phone numbers in SendMoneyScreen
   const simulateQRScan = () => {
-    const mockQRData = JSON.stringify({
-      type: 'flash_payment',
-      phone: '+260971234567',
-      name: 'John Mwanza',
-      amount: '50'
-    });
-    handleQRCodeScanned(mockQRData);
+    Alert.alert(
+      'QR Scanner Not Available',
+      'Real-time QR scanning requires camera setup. Please use the manual phone number entry option.',
+      [{ text: 'OK', onPress: () => navigation.goBack() }]
+    );
   };
 
   if (hasPermission === null) {

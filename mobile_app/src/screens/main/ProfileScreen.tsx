@@ -4,6 +4,7 @@ import { styled } from 'nativewind';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button } from '../../ui';
 import { useAuth } from '../../context/AuthContext';
+import { transactionsAPI } from '../../services/api';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -18,6 +19,8 @@ export default function ProfileScreen() {
   const slideAnim = useRef(new Animated.Value(30)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [walletData, setWalletData] = useState<any>(null);
+  const [loadingWallet, setLoadingWallet] = useState(true);
 
   useEffect(() => {
     Animated.parallel([
@@ -33,6 +36,37 @@ export default function ProfileScreen() {
       }),
     ]).start();
   }, []);
+
+  // Fetch wallet data from backend
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      if (!user) {
+        setLoadingWallet(false);
+        return;
+      }
+
+      try {
+        console.log('💳 Fetching wallet data from backend...');
+        const wallet = await transactionsAPI.getWallet();
+        console.log('✅ Wallet data received:', wallet);
+        setWalletData(wallet);
+      } catch (error) {
+        console.error('❌ Failed to fetch wallet data:', error);
+        // Set default values on error
+        setWalletData({
+          daily_limit: '5000.00',
+          daily_spent: '0.00',
+          escrow_balance: '0.00',
+          rewards_balance: '0.00',
+          currency: 'ZMW'
+        });
+      } finally {
+        setLoadingWallet(false);
+      }
+    };
+
+    fetchWalletData();
+  }, [user]);
 
   useEffect(() => {
     if (isLoggingOut) {
@@ -50,10 +84,10 @@ export default function ProfileScreen() {
     }
   }, [isLoggingOut, rotateAnim]);
 
-  // Mock user data - in real app this would come from context
+  // Use real user data from auth context
   const profileUser = user || {
-    full_name: 'OTP Test User',
-    phone_number: '+260977999888',
+    full_name: 'Guest User',
+    phone_number: '',
     email: '',
     kyc_tier: 1,
     is_verified: false
@@ -160,11 +194,23 @@ export default function ProfileScreen() {
           <StyledView className="flex-row gap-4 mb-8">
             <StyledView className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-6 items-center">
               <StyledText className="text-white/60 text-sm font-light mb-2">Daily Limit</StyledText>
-              <StyledText className="text-white font-light text-xl">ZMW 5,000</StyledText>
+              {loadingWallet ? (
+                <StyledText className="text-white/40 font-light text-xl">Loading...</StyledText>
+              ) : (
+                <StyledText className="text-white font-light text-xl">
+                  ZMW {walletData?.daily_limit || '5,000'}
+                </StyledText>
+              )}
             </StyledView>
             <StyledView className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-6 items-center">
               <StyledText className="text-white/60 text-sm font-light mb-2">Used Today</StyledText>
-              <StyledText className="text-green-400 font-light text-xl">ZMW 150</StyledText>
+              {loadingWallet ? (
+                <StyledText className="text-white/40 font-light text-xl">Loading...</StyledText>
+              ) : (
+                <StyledText className="text-green-400 font-light text-xl">
+                  ZMW {walletData?.daily_spent || '0'}
+                </StyledText>
+              )}
             </StyledView>
           </StyledView>
         </StyledAnimatedView>
