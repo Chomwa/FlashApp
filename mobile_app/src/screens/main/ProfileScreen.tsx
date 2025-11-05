@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Animated, Alert } from 'react-native';
 import { styled } from 'nativewind';
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button } from '../../ui';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +15,7 @@ const StyledSafeAreaView = styled(SafeAreaView);
 const StyledAnimatedView = styled(Animated.View);
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<any>();
   const { user, logout } = useAuth();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -136,8 +138,29 @@ export default function ProfileScreen() {
   };
 
   const handleMenuPress = (title: string) => {
-    // Handle menu navigation
-    console.log(`Navigating to ${title}`);
+    switch (title) {
+      case 'Edit Profile':
+        navigation.navigate('EditProfile');
+        break;
+      case 'Phone & Security':
+        // TODO: Navigate to security settings
+        Alert.alert('Coming Soon', 'Security settings will be available soon!');
+        break;
+      case 'Payment Methods':
+        Alert.alert('Coming Soon', 'Payment methods management coming soon!');
+        break;
+      case 'Transaction Limits':
+        Alert.alert('Transaction Limits', `Daily Limit: ZMW ${walletData?.daily_limit || '5,000'}\nDaily Spent: ZMW ${walletData?.daily_spent || '0'}`);
+        break;
+      case 'Help & Support':
+        Alert.alert('Help & Support', 'For assistance, please contact support@flashpay.zm');
+        break;
+      case 'Legal & Privacy':
+        Alert.alert('Coming Soon', 'Terms and privacy policy coming soon!');
+        break;
+      default:
+        console.log(`Navigating to ${title}`);
+    }
   };
 
   return (
