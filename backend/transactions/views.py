@@ -1,12 +1,17 @@
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db import models
 from datetime import timedelta
 from decimal import Decimal
 import logging
+import json
+import qrcode
+from io import BytesIO
+import base64
 
 from .models import Transaction, P2PTransaction, Wallet, TransactionType, TransactionStatus
 from .serializers import (
@@ -213,3 +218,57 @@ class RequestMoneyView(generics.CreateAPIView):
             'qr_code': p2p_transaction.qr_code_image,
             'message': 'Payment request created successfully'
         }, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_receive_qr_code(request):
+    """
+    Generate a QR code for the user to receive money.
+    POST data:
+    {
+        "amount": "100.00" (optional),
+        "message": "Payment for..." (optional)
+    }
+    """
+    user = request.user
+    amount = request.data.get('amount')
+    message = request.data.get('message', '')
+    
+    # Create QR code data
+    qr_data = {
+        'type': 'flash_payment',
+        'phone': user.phone_number,
+        'name': user.full_name,
+    }
+    
+    if amount:
+        qr_data['amount'] = str(amount)
+    
+    if message:
+        qr_data['message'] = message
+    
+    # Convert to JSON string
+    qr_json = json.dumps(qr_data)
+    
+    # Generate QR code image
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_json)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert to base64
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    
+    return Response({
+        'qr_code_data': qr_data,
+        'qr_code_image': f'data:image/png;base64,{img_str}',
+        'qr_code_base64': img_str
+    })
