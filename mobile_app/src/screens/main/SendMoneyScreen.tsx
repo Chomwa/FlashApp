@@ -44,6 +44,18 @@ export default function SendMoneyScreen() {
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // Handle prefilled data from QR scan
+  useEffect(() => {
+    if (route.params?.prefilledAmount) {
+      console.log('💳 Prefilling amount from QR scan:', route.params.prefilledAmount);
+      setAmount(route.params.prefilledAmount);
+    }
+    if (route.params?.prefilledMessage) {
+      console.log('💬 Prefilling message from QR scan:', route.params.prefilledMessage);
+      setMessage(route.params.prefilledMessage);
+    }
+  }, [route.params?.prefilledAmount, route.params?.prefilledMessage]);
+
   const loadContacts = async () => {
     setLoadingContacts(true);
     try {
