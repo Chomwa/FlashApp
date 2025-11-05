@@ -428,15 +428,6 @@ export const transactionsAPI = {
       throw error;
     }
   },
-
-  requestMoney: async (data: {payer_phone: string; amount: number; description?: string}) => {
-    try {
-      const response = await api.post('/transactions/request/', data);
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  },
 };
 
 // Payments API
