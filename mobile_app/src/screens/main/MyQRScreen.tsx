@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Share, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Share, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { styled } from 'nativewind';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import QRCode from 'react-native-qrcode-svg';
 import { Button } from '../../ui';
+import { transactionsAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -11,45 +14,35 @@ const StyledTouchableOpacity = styled(TouchableOpacity);
 const StyledSafeAreaView = styled(SafeAreaView);
 const StyledScrollView = styled(ScrollView);
 
-// Professional QR Code Component
-const QRCodeDisplay = ({ data }: { data: string }) => {
-  // Create a proper QR pattern using geometric shapes
-  const createQRPattern = () => {
-    const pattern = [];
-    for (let i = 0; i < 21; i++) {
-      const row = [];
-      for (let j = 0; j < 21; j++) {
-        // Create a realistic QR pattern
-        const isBlack = Math.random() > 0.5;
-        row.push(isBlack);
-      }
-      pattern.push(row);
-    }
-    return pattern;
-  };
+// Real QR Code Component with backend generation
+const QRCodeDisplay = ({ data, loading }: { data: any; loading: boolean }) => {
+  if (loading) {
+    return (
+      <StyledView className="bg-white rounded-3xl p-6 shadow-2xl items-center justify-center" style={{ width: 250, height: 250 }}>
+        <ActivityIndicator size="large" color="#0EA5E9" />
+        <StyledText className="text-navy/60 mt-4">Generating QR Code...</StyledText>
+      </StyledView>
+    );
+  }
 
-  const qrPattern = createQRPattern();
+  if (!data) {
+    return (
+      <StyledView className="bg-white rounded-3xl p-6 shadow-2xl items-center justify-center" style={{ width: 250, height: 250 }}>
+        <StyledText className="text-navy/60">Unable to generate QR code</StyledText>
+      </StyledView>
+    );
+  }
 
   return (
     <StyledView className="bg-white rounded-3xl p-6 shadow-2xl">
       <StyledView className="items-center">
         <StyledView className="bg-white rounded-2xl p-4 mb-4">
-          <StyledView style={{ width: 200, height: 200 }}>
-            {qrPattern.map((row, i) => (
-              <StyledView key={i} style={{ flexDirection: 'row' }}>
-                {row.map((cell, j) => (
-                  <StyledView
-                    key={j}
-                    style={{
-                      width: 200 / 21,
-                      height: 200 / 21,
-                      backgroundColor: cell ? '#02121B' : '#FFFFFF',
-                    }}
-                  />
-                ))}
-              </StyledView>
-            ))}
-          </StyledView>
+          <QRCode
+            value={JSON.stringify(data)}
+            size={200}
+            color="#02121B"
+            backgroundColor="#FFFFFF"
+          />
         </StyledView>
         <StyledView className="w-12 h-12 bg-sky rounded-2xl items-center justify-center">
           <StyledText className="text-white text-2xl">⚡</StyledText>
@@ -61,20 +54,49 @@ const QRCodeDisplay = ({ data }: { data: string }) => {
 
 export default function MyQRScreen() {
   const navigation = useNavigation<any>();
+  const { user } = useAuth();
   const [activeAmount, setActiveAmount] = useState<string | null>(null);
-  
-  // This would come from user context in a real app
-  const userPhone = '+260971234567';
-  const userName = 'John Mwanza';
+  const [qrData, setQrData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const quickAmounts = ['50', '100', '200', '500'];
 
-  const qrData = JSON.stringify({
-    type: 'flash_payment',
-    phone: userPhone,
-    name: userName,
-    amount: activeAmount
-  });
+  // Get real user data
+  const userPhone = user?.phone_number || '';
+  const userName = user?.full_name || 'User';
+
+  // Generate QR code when component mounts or amount changes
+  useEffect(() => {
+    generateQRCode();
+  }, [activeAmount]);
+
+  const generateQRCode = async () => {
+    if (!user) {
+      setLoading(false);
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('🔄 Generating QR code...', { amount: activeAmount });
+      const response = await transactionsAPI.generateQRCode(
+        activeAmount || undefined,
+        undefined
+      );
+      console.log('✅ QR code generated:', response.qr_code_data);
+      setQrData(response.qr_code_data);
+    } catch (error) {
+      console.error('❌ Failed to generate QR code:', error);
+      Alert.alert(
+        'QR Generation Failed',
+        'Unable to generate QR code. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -131,7 +153,7 @@ export default function MyQRScreen() {
 
         {/* QR Code Display */}
         <StyledView className="items-center mb-8">
-          <QRCodeDisplay data={qrData} />
+          <QRCodeDisplay data={qrData} loading={loading} />
         </StyledView>
 
         {/* Quick Amount Selection */}

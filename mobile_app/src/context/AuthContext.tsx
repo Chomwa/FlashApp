@@ -6,8 +6,11 @@ interface User {
   id: string;
   phone_number: string;
   full_name: string;
+  email?: string;
   avatar?: string;
   is_phone_verified: boolean;
+  kyc_tier?: number;
+  is_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -115,12 +118,12 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({
           await authAPI.logout();
           console.log('✅ Logout API call successful');
         } catch (apiError) {
-          console.log('⚠️ Logout API error (token may be invalid):', apiError.message);
+          console.log('⚠️ Logout API error (token may be invalid):', apiError instanceof Error ? apiError.message : String(apiError));
           // Continue with cleanup even if API call fails
         }
       }
     } catch (error) {
-      console.log('⚠️ General logout error (but continuing):', error.message);
+      console.log('⚠️ General logout error (but continuing):', error instanceof Error ? error.message : String(error));
       // Don't throw error, just log it
     } finally {
       // Always remove the token regardless of API call success

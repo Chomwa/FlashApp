@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, Platform, Linking } from 'react-native';
 import { styled } from 'nativewind';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../ui';
 import { ViralCard, VIRAL_CARDS } from '../../ui/ViralCard';
-import { transactionsAPI } from '../../services/api';
+import { transactionsAPI, contactsAPI } from '../../services/api';
+import Contacts from 'react-native-contacts';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -39,38 +41,70 @@ export default function RequestMoneyScreen() {
   const loadContacts = async () => {
     setLoadingContacts(true);
     try {
-      // Mock contacts for demo
-      const mockContacts: Contact[] = [
-        {
-          recordID: '1',
-          displayName: 'John Mwanza',
-          phoneNumbers: [{ number: '+260971234567', label: 'mobile' }]
-        },
-        {
-          recordID: '2', 
-          displayName: 'Sarah Banda',
-          phoneNumbers: [{ number: '+260977654321', label: 'mobile' }]
-        },
-        {
-          recordID: '3',
-          displayName: 'Peter Phiri', 
-          phoneNumbers: [{ number: '+260965551234', label: 'mobile' }]
-        },
-        {
-          recordID: '4',
-          displayName: 'Mary Lungu',
-          phoneNumbers: [{ number: '+260979876543', label: 'mobile' }]
-        }
-      ];
-      
-      setTimeout(() => {
-        setContacts(mockContacts);
+      console.log('📇 Requesting contacts permission...');
+
+      // Request contacts permission based on platform
+      const permission = Platform.OS === 'ios'
+        ? PERMISSIONS.IOS.CONTACTS
+        : PERMISSIONS.ANDROID.READ_CONTACTS;
+
+      const result = await request(permission);
+      console.log('📱 Permission result:', result);
+
+      if (result === RESULTS.GRANTED) {
+        console.log('📇 Loading phone contacts...');
+
+        // Load all phone contacts
+        const phoneContacts = await Contacts.getAll();
+        console.log('✅ Phone contacts loaded:', phoneContacts.length, 'contacts');
+
+        // Filter contacts that have phone numbers
+        const validContacts: Contact[] = phoneContacts
+          .filter(contact => contact.phoneNumbers && contact.phoneNumbers.length > 0)
+          .map(contact => ({
+            recordID: contact.recordID,
+            displayName: contact.displayName || contact.givenName || 'Unknown',
+            phoneNumbers: contact.phoneNumbers.map(phone => ({
+              number: phone.number,
+              label: phone.label || 'mobile'
+            }))
+          }));
+
+        setContacts(validContacts);
         setShowContacts(true);
-        setLoadingContacts(false);
-      }, 500);
-      
+        console.log('✅ Contacts filtered and set:', validContacts.length);
+
+      } else if (result === RESULTS.DENIED || result === RESULTS.BLOCKED) {
+        console.log('❌ Contacts permission denied');
+
+        Alert.alert(
+          'Contacts Permission Required',
+          'Flash needs access to your contacts to help you request money quickly. You can still enter phone numbers manually.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => Linking.openSettings()
+            }
+          ]
+        );
+
+        setContacts([]);
+        setShowContacts(false);
+      }
+
     } catch (error) {
-      Alert.alert('Error', 'Unable to load contacts. Please enter phone number manually.');
+      console.error('❌ Failed to load phone contacts:', error);
+
+      Alert.alert(
+        'Unable to Load Contacts',
+        'Could not access your phone contacts. You can still enter a phone number manually.',
+        [{ text: 'OK' }]
+      );
+
+      setContacts([]);
+      setShowContacts(false);
+    } finally {
       setLoadingContacts(false);
     }
   };

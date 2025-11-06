@@ -11,6 +11,8 @@ import SendMoneyScreen from '../screens/main/SendMoneyScreen';
 import ReceiveMoneyScreen from '../screens/main/ReceiveMoneyScreen';
 import QRScannerScreen from '../screens/main/QRScannerScreen';
 import TransactionDetailsScreen from '../screens/main/TransactionDetailsScreen';
+import EditProfileScreen from '../screens/main/EditProfileScreen';
+import AddContactScreen from '../screens/main/AddContactScreen';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -21,10 +23,17 @@ export type MainTabParamList = {
 
 export type MainStackParamList = {
   MainTabs: undefined;
-  SendMoney: {contact?: {name: string; phone: string}};
+  SendMoney: {
+    contact?: {name: string; phone: string};
+    recipient?: {name: string; phone: string};
+    prefilledAmount?: string;
+    prefilledMessage?: string;
+  };
   ReceiveMoney: undefined;
   QRScanner: undefined;
   TransactionDetails: {transactionId: string};
+  EditProfile: undefined;
+  AddContact: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -95,6 +104,16 @@ const MainStack = () => {
         name="TransactionDetails"
         component={TransactionDetailsScreen}
         options={{title: 'Transaction Details'}}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AddContact"
+        component={AddContactScreen}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );

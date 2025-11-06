@@ -51,5 +51,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Flash needs camera access to scan QR codes for instant payments</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Flash needs access to your contacts to help you send money quickly to friends and family</string>
 </dict>
 </plist>

@@ -58,15 +58,10 @@ export default function ApprovalScreen() {
         
         // Continue polling if still pending/processing
         pollCount++;
-        
-        // Demo mode: Auto-complete after 5 seconds (1 poll)
-        if (__DEV__ && pollCount >= 1 && Date.now() - startTime >= 5000) {
-          console.log('🎭 Demo mode: Auto-completing transaction after 5 seconds');
-          setStatus('approved');
-          setWaiting(false);
-          return;
-        }
-        
+
+        // Continue polling for real payment status
+        // No auto-completion - wait for actual MTN approval
+
         if (pollCount < maxPolls) {
           setTimeout(pollTransactionStatus, 5000);
         } else {
@@ -136,16 +131,13 @@ export default function ApprovalScreen() {
               <StyledText className="text-white/70 text-center mb-6">
                 To: {recipient?.name || phone}
               </StyledText>
-              
-              {/* Disabled for demo mode */}
-              {!__DEV__ && (
-                <Button
-                  title="Open Mobile Money App"
-                  onPress={handleOpenMTN}
-                  variant="secondary"
-                  size="md"
-                />
-              )}
+
+              <Button
+                title="Open Mobile Money App"
+                onPress={handleOpenMTN}
+                variant="secondary"
+                size="md"
+              />
             </StyledView>
             
             <StyledView className="mt-8 bg-gold/10 p-4 rounded-xl">

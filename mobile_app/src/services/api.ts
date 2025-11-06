@@ -415,6 +415,19 @@ export const transactionsAPI = {
       throw error;
     }
   },
+
+  generateQRCode: async (amount?: string, message?: string) => {
+    try {
+      const data: any = {};
+      if (amount) data.amount = amount;
+      if (message) data.message = message;
+
+      const response = await api.post('/transactions/generate-qr/', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 // Payments API

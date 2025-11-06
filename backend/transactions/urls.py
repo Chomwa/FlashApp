@@ -10,5 +10,6 @@ urlpatterns = [
     path('wallet/', views.WalletView.as_view(), name='wallet'),
     path('send/', views.SendMoneyView.as_view(), name='send-money'),
     path('request/', views.RequestMoneyView.as_view(), name='request-money'),
+    path('generate-qr/', views.generate_receive_qr_code, name='generate-qr'),
     path('', include(router.urls)),
 ]

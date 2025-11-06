@@ -104,34 +104,18 @@ export default function OTPScreen() {
       
     } catch (otpError) {
       console.error('❌ OTP verification failed:', otpError);
-      
-      // Fallback for development if the new API doesn't work
-      if (__DEV__ && (code === debugCode || code === '123456')) {
-        console.log('🔄 Falling back to mock authentication...');
-        
-        // Use a simple development token
-        const devToken = 'dev-token-' + Date.now();
-        await require('@react-native-async-storage/async-storage').default.setItem('auth_token', devToken);
-        console.log('✅ Stored development token');
-        
-        // Set mock user in context
-        const mockUser = {
-          id: 'dev-user',
-          phone_number: phone || '+260977888999',
-          full_name: 'OTP Test User',
-          is_phone_verified: true
-        };
-        updateUser(mockUser);
-        console.log('✅ Updated user in context (fallback)');
-        
-        // Navigate to main app
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' }],
-        });
-      } else {
-        alert('Invalid verification code. Please try 123456 for testing.');
-      }
+
+      // Show error message for invalid code
+      const errorMessage = otpError?.response?.data?.error ||
+                          otpError?.response?.data?.message ||
+                          'Invalid verification code. Please check your SMS and try again.';
+
+      showMessage({
+        message: 'Verification Failed',
+        description: errorMessage,
+        type: 'danger',
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }

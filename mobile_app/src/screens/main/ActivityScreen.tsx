@@ -83,51 +83,18 @@ export default function ActivityScreen() {
       console.log('📊 First transaction:', transactionsList[0] || 'None');
       setTransactions(transactionsList);
     } catch (error) {
-      console.error('Error loading transactions:', error);
-      
+      console.error('❌ Error loading transactions:', error);
+
       // If it's a 401 error, user is not authenticated - clear transactions
       if (error.response?.status === 401) {
         console.log('🔐 User not authenticated, clearing transactions');
         setTransactions([]);
         return;
       }
-      
-      // Use mock data as fallback for other errors
-      setTransactions([
-        {
-          id: '1',
-          type: 'sent',
-          amount: '150.00',
-          currency: 'ZMW',
-          recipient: 'John Mwanza',
-          phone: '+260971234567',
-          created_at: '2024-01-15T14:30:00Z',
-          status: 'completed',
-          description: 'Lunch money'
-        },
-        {
-          id: '2',
-          type: 'received',
-          amount: '75.50',
-          currency: 'ZMW',
-          sender: 'Sarah Banda',
-          phone: '+260977654321',
-          created_at: '2024-01-14T10:15:00Z',
-          status: 'completed',
-          description: 'Taxi fare'
-        },
-        {
-          id: '3',
-          type: 'sent',
-          amount: '300.00',
-          currency: 'ZMW',
-          recipient: 'Mary Lungu',
-          phone: '+260979876543',
-          created_at: '2024-01-13T16:45:00Z',
-          status: 'pending',
-          description: 'Groceries'
-        }
-      ]);
+
+      // Clear transactions on error - show empty state instead of mock data
+      console.log('⚠️ Failed to load transactions, showing empty state');
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
