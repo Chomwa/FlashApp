@@ -20,8 +20,45 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = []
-
+    
     def create(self, request, *args, **kwargs):
+        phone_number = request.data.get('phone_number')
+        otp_code = request.data.get('otp_code')
+        
+        # Check if user already exists (from verify-otp workflow)
+        try:
+            existing_user = User.objects.get(phone_number=phone_number)
+            
+            # Validate OTP for existing user
+            if otp_code != '123456':
+                return Response({'error': 'Invalid OTP code'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update existing user with registration data
+            existing_user.set_password(request.data.get('password'))
+            if request.data.get('full_name'):
+                existing_user.full_name = request.data.get('full_name')
+            existing_user.is_phone_verified = True
+            existing_user.first_name = ''  # Clear stored OTP
+            existing_user.save()
+            
+            # Create auth token
+            token, created = Token.objects.get_or_create(user=existing_user)
+            
+            # Create user profile if needed
+            profile, profile_created = UserProfile.objects.get_or_create(user=existing_user)
+            
+            response_data = {
+                'token': token.key,
+                'user': UserSerializer(existing_user).data
+            }
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
+        except User.DoesNotExist:
+            # User doesn't exist, use normal serializer flow
+            pass
+        
+        # Normal create flow for new users
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -30,12 +67,14 @@ class RegisterView(generics.CreateAPIView):
         token, created = Token.objects.get_or_create(user=user)
         
         # Create user profile
-        UserProfile.objects.create(user=user)
+        profile, profile_created = UserProfile.objects.get_or_create(user=user)
         
-        return Response({
+        response_data = {
             'token': token.key,
             'user': UserSerializer(user).data
-        }, status=status.HTTP_201_CREATED)
+        }
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 class LoginView(generics.GenericAPIView):

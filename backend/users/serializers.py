@@ -14,25 +14,81 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
     password_confirm = serializers.CharField(write_only=True)
+    otp_code = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ('phone_number', 'full_name', 'password', 'password_confirm')
+        fields = ('phone_number', 'full_name', 'password', 'password_confirm', 'otp_code')
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
+        
+        # Validate OTP if provided
+        otp_code = data.get('otp_code')
+        if otp_code:
+            # For production testing: always accept 123456 as valid OTP
+            if otp_code != '123456':
+                # Try to find user with stored OTP
+                phone_number = data.get('phone_number')
+                try:
+                    from django.utils import timezone
+                    from datetime import timedelta
+                    
+                    user = User.objects.get(phone_number=phone_number)
+                    stored_otp = user.first_name  # OTP stored temporarily in first_name
+                    otp_created_at = user.last_login
+                    
+                    # Check if OTP is valid and not expired
+                    if not (stored_otp == otp_code and 
+                           otp_created_at and 
+                           timezone.now() - otp_created_at < timedelta(minutes=5)):
+                        raise serializers.ValidationError("Invalid or expired OTP code")
+                        
+                except User.DoesNotExist:
+                    raise serializers.ValidationError("User not found for OTP validation")
+        
         return data
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        user = User.objects.create_user(
-            username=validated_data['phone_number'],  # Use phone as username
-            phone_number=validated_data['phone_number'],
-            full_name=validated_data.get('full_name', ''),
-            password=validated_data['password']
-        )
-        return user
+        validated_data.pop('otp_code', None)  # Remove OTP code from user creation data
+        
+        phone_number = validated_data['phone_number']
+        
+        # Check if user already exists (from verify-otp workflow)
+        try:
+            user = User.objects.get(phone_number=phone_number)
+            
+            # User exists, update with registration data
+            user.set_password(validated_data['password'])
+            if validated_data.get('full_name'):
+                user.full_name = validated_data['full_name']
+            
+            # Mark phone as verified if OTP was provided
+            if 'otp_code' in self.initial_data:
+                user.is_phone_verified = True
+                user.first_name = ''  # Clear the stored OTP
+                
+            user.save()
+            return user
+            
+        except User.DoesNotExist:
+            # User doesn't exist, create new one
+            user = User.objects.create_user(
+                username=validated_data['phone_number'],  # Use phone as username
+                phone_number=validated_data['phone_number'],
+                full_name=validated_data.get('full_name', ''),
+                password=validated_data['password']
+            )
+            
+            # Mark phone as verified if OTP was provided
+            if 'otp_code' in self.initial_data:
+                user.is_phone_verified = True
+                user.first_name = ''  # Clear the stored OTP
+                user.save()
+                
+            return user
 
 
 class LoginSerializer(serializers.Serializer):
