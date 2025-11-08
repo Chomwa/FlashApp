@@ -15,6 +15,8 @@ import QRScannerScreen from '../screens/main/QRScannerScreen';
 import TransactionDetailsScreen from '../screens/main/TransactionDetailsScreen';
 import EditProfileScreen from '../screens/main/EditProfileScreen';
 import AddContactScreen from '../screens/main/AddContactScreen';
+import CardHubScreen from '../screens/main/CardHubScreen';
+import CustomCardScreen from '../screens/main/CustomCardScreen';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -45,6 +47,10 @@ export type MainStackParamList = {
   EditProfile: undefined;
   AddContact: undefined;
   Contacts: undefined;
+  CardHub: {
+    onSelectCard?: (cardId: string) => void;
+  };
+  CustomCard: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -134,6 +140,16 @@ const MainStack = () => {
       <Stack.Screen
         name="RequestTracking"
         component={RequestTrackingScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CardHub"
+        component={CardHubScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="CustomCard"
+        component={CustomCardScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, Pressable } from 'react-native';
 import { styled } from 'nativewind';
-import { VIRAL_CARDS } from './ViralCard';
+import { VIRAL_CARDS, ViralCard } from './ViralCard';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -16,35 +16,6 @@ interface CardSelectionModalProps {
   onSelectCard: (cardId: string | null) => void;
 }
 
-interface CardProps {
-  id: string;
-  emoji: string;
-  title: string;
-  isSelected: boolean;
-  onPress: (id: string) => void;
-}
-
-const Card: React.FC<CardProps> = ({ id, emoji, title, isSelected, onPress }) => {
-  return (
-    <StyledTouchableOpacity
-      className={`bg-white/5 border border-white/10 rounded-2xl p-4 items-center h-[120px] justify-center w-full ${
-        isSelected ? 'border-sky bg-sky/10' : ''
-      }`}
-      onPress={() => onPress(id)}
-    >
-      <StyledText className="text-3xl mb-2">{emoji}</StyledText>
-      <StyledText className="text-white text-sm font-light text-center">
-        {title}
-      </StyledText>
-      
-      {isSelected && (
-        <StyledView className="absolute -top-2 -right-2 w-6 h-6 bg-sky rounded-full items-center justify-center">
-          <StyledText className="text-white text-xs font-bold">✓</StyledText>
-        </StyledView>
-      )}
-    </StyledTouchableOpacity>
-  );
-};
 
 export const CardSelectionModal: React.FC<CardSelectionModalProps> = ({
   visible,
@@ -58,10 +29,16 @@ export const CardSelectionModal: React.FC<CardSelectionModalProps> = ({
     onClose();
   };
 
-  // Group cards by category
-  const featuredCard = VIRAL_CARDS.find(card => card.id === 'business');
-  const seasonalCards = VIRAL_CARDS.filter(card => ['halloween', 'birthday', 'celebration'].includes(card.id));
-  const otherCards = VIRAL_CARDS.filter(card => !['business', 'halloween', 'birthday', 'celebration'].includes(card.id));
+  // Group cards by category - Gen Z focused
+  const featuredCard = VIRAL_CARDS.find(card => card.id === 'clock_it');
+  const trendingCards = VIRAL_CARDS.filter(card => ['flash_gang', 'periodt', 'slay', 'main_character', 'no_cap'].includes(card.id));
+  const moodCards = VIRAL_CARDS.filter(card => ['fire', 'big_mood', 'its_giving', 'bestie'].includes(card.id));
+  const helpfulCards = VIRAL_CARDS.filter(card => ['data_hero', 'lunch_rescue', 'transport_sorted', 'emergency', 'ka_something'].includes(card.id));
+  const otherCards = VIRAL_CARDS.filter(card => ![
+    'clock_it', 'flash_gang', 'periodt', 'slay', 'main_character', 'no_cap',
+    'fire', 'big_mood', 'its_giving', 'bestie',
+    'data_hero', 'lunch_rescue', 'transport_sorted', 'emergency', 'ka_something'
+  ].includes(card.id));
 
   return (
     <Modal
@@ -97,37 +74,41 @@ export const CardSelectionModal: React.FC<CardSelectionModalProps> = ({
                 {featuredCard && (
                   <StyledView className="py-6">
                     <StyledView className="items-center mb-6">
-                      <Card
+                      <ViralCard
                         id={featuredCard.id}
                         emoji={featuredCard.emoji}
                         title={featuredCard.title}
+                        color={featuredCard.color}
+                        animated={featuredCard.animated}
                         isSelected={selectedCard === featuredCard.id}
                         onPress={handleCardPress}
                       />
                     </StyledView>
                     <StyledText className="text-white text-xl font-light text-center mb-2">
-                      Greeting Card of the Year
+                      🔥 Card of the Year 🔥
                     </StyledText>
                   </StyledView>
                 )}
 
-                {/* Seasonal Cards */}
-                {seasonalCards.length > 0 && (
+                {/* Trending Cards */}
+                {trendingCards.length > 0 && (
                   <StyledView className="py-4">
                     <StyledText className="text-white text-lg font-light mb-4">
-                      In season
+                      ✨ Trending Now
                     </StyledText>
                     <StyledScrollView 
                       horizontal 
                       showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 16 }}
+                      contentContainerStyle={{ gap: 12 }}
                     >
-                      {seasonalCards.map((card) => (
-                        <Card
+                      {trendingCards.map((card) => (
+                        <ViralCard
                           key={card.id}
                           id={card.id}
                           emoji={card.emoji}
                           title={card.title}
+                          color={card.color}
+                          animated={card.animated}
                           isSelected={selectedCard === card.id}
                           onPress={handleCardPress}
                         />
@@ -136,19 +117,72 @@ export const CardSelectionModal: React.FC<CardSelectionModalProps> = ({
                   </StyledView>
                 )}
 
+                {/* Mood Cards */}
+                {moodCards.length > 0 && (
+                  <StyledView className="py-4">
+                    <StyledText className="text-white text-lg font-light mb-4">
+                      💯 Mood Energy
+                    </StyledText>
+                    <StyledScrollView 
+                      horizontal 
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 12 }}
+                    >
+                      {moodCards.map((card) => (
+                        <ViralCard
+                          key={card.id}
+                          id={card.id}
+                          emoji={card.emoji}
+                          title={card.title}
+                          color={card.color}
+                          animated={card.animated}
+                          isSelected={selectedCard === card.id}
+                          onPress={handleCardPress}
+                        />
+                      ))}
+                    </StyledScrollView>
+                  </StyledView>
+                )}
+
+                {/* Helpful Cards */}
+                {helpfulCards.length > 0 && (
+                  <StyledView className="py-4">
+                    <StyledText className="text-white text-lg font-light mb-4">
+                      🦸 Life Savers
+                    </StyledText>
+                    <StyledView className="flex-row flex-wrap justify-between">
+                      {helpfulCards.map((card) => (
+                        <StyledView key={card.id} className="w-[48%] mb-4">
+                          <ViralCard
+                            id={card.id}
+                            emoji={card.emoji}
+                            title={card.title}
+                            color={card.color}
+                            animated={card.animated}
+                            isSelected={selectedCard === card.id}
+                            onPress={handleCardPress}
+                          />
+                        </StyledView>
+                      ))}
+                    </StyledView>
+                  </StyledView>
+                )}
+
                 {/* Other Cards */}
                 {otherCards.length > 0 && (
                   <StyledView className="py-4">
                     <StyledText className="text-white text-lg font-light mb-4">
-                      All cards
+                      🎭 More Vibes
                     </StyledText>
                     <StyledView className="flex-row flex-wrap justify-between">
-                      {otherCards.map((card, index) => (
+                      {otherCards.map((card) => (
                         <StyledView key={card.id} className="w-[48%] mb-4">
-                          <Card
+                          <ViralCard
                             id={card.id}
                             emoji={card.emoji}
                             title={card.title}
+                            color={card.color}
+                            animated={card.animated}
                             isSelected={selectedCard === card.id}
                             onPress={handleCardPress}
                           />

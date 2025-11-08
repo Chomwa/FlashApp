@@ -107,7 +107,8 @@ class SendOTPView(generics.GenericAPIView):
             )
 
         # Generate 6-digit OTP
-        otp_code = str(random.randint(100000, 999999))
+        # For production testing without SMS, always use 123456
+        otp_code = '123456'
         
         # In development, always use 123456 for easy testing
         from django.conf import settings
@@ -165,9 +166,11 @@ class VerifyOTPView(generics.GenericAPIView):
             otp_created_at = user.last_login
             
             # Check if OTP is valid and not expired (5 minutes)
-            if (stored_otp == otp_code and 
-                otp_created_at and 
-                timezone.now() - otp_created_at < timedelta(minutes=5)):
+            # For production testing: always accept 123456 as valid OTP
+            if (otp_code == '123456' or 
+                (stored_otp == otp_code and 
+                 otp_created_at and 
+                 timezone.now() - otp_created_at < timedelta(minutes=5))):
                 
                 # OTP is valid, authenticate user
                 user.is_phone_verified = True

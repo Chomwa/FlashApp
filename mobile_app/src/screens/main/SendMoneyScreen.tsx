@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, Platform, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, Platform, Linking, DeviceEventEmitter } from 'react-native';
 import { styled } from 'nativewind';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { Button, CardSelectionModal } from '../../ui';
 import { VIRAL_CARDS } from '../../ui/ViralCard';
 import { transactionsAPI, contactsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import CardAnalyticsService from '../../services/cardAnalytics';
 import { NetworkService } from '../../services/networkService';
 import Contacts from 'react-native-contacts';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
@@ -45,6 +46,16 @@ export default function SendMoneyScreen() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [sending, setSending] = useState(false);
+
+  // Listen for card selection events
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('cardSelected', (cardId: string) => {
+      console.log('Card selected via event:', cardId);
+      setSelectedCard(cardId);
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // Handle prefilled data from QR scan
   useEffect(() => {
@@ -227,6 +238,17 @@ export default function SendMoneyScreen() {
       // Process normally if online
       const response = await transactionsAPI.sendMoney(transactionData);
       console.log('✅ Send money successful:', response);
+
+      // Track card usage if a card was selected
+      if (selectedCard) {
+        await CardAnalyticsService.trackCardUsage({
+          cardId: selectedCard,
+          timestamp: Date.now(),
+          context: 'send',
+          amount: parseFloat(amount),
+          recipient: selectedContact?.name || phone
+        });
+      }
 
       // Navigate to approval/waiting screen with transaction details
       navigation.navigate('Approval', {
@@ -484,7 +506,7 @@ export default function SendMoneyScreen() {
         {/* Include a Card - Viral Feature */}
         <StyledTouchableOpacity 
           className="flex-row items-center mb-8"
-          onPress={() => setShowCardModal(true)}
+          onPress={() => navigation.navigate('CardHub')}
         >
           <StyledText className="text-sky text-xl mr-3">💌</StyledText>
           <StyledText className="text-sky text-lg font-medium">Include a card</StyledText>

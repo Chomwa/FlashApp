@@ -21,6 +21,8 @@ import RequestReviewScreen from '../screens/main/RequestReviewScreen';
 import EditProfileScreen from '../screens/main/EditProfileScreen';
 import SecuritySettingsScreen from '../screens/main/SecuritySettingsScreen';
 import InviteProgramScreen from '../screens/main/InviteProgramScreen';
+import CardHubScreen from '../screens/main/CardHubScreen';
+import CustomCardScreen from '../screens/main/CustomCardScreen';
 
 // Auth screens
 import OnboardingPhoneScreen from '../screens/auth/OnboardingPhoneScreen';
@@ -329,6 +331,22 @@ export default function AppNavigator() {
               options={{ 
                 title: 'Exclusive Invites',
                 presentation: 'card'
+              }}
+            />
+            <Stack.Screen 
+              name="CardHub" 
+              component={CardHubScreen}
+              options={{ 
+                title: 'Choose Your Vibe',
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen 
+              name="CustomCard" 
+              component={CustomCardScreen}
+              options={{ 
+                title: 'Create Custom Card',
+                presentation: 'modal'
               }}
             />
           </>

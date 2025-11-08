@@ -5,4 +5,6 @@ export { Modal } from './Modal';
 export { Loader } from './Loader';
 export { ViralCard, VIRAL_CARDS } from './ViralCard';
 export { CardSelectionModal } from './CardSelectionModal';
+export { CelebrationAnimation, TriggerCelebration } from './CelebrationAnimation';
+export { PaymentCardAnimation } from './PaymentCardAnimation';
 export { Toast } from './Toast';
