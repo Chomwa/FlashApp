@@ -26,5 +26,9 @@ RUN mkdir -p media/uploads
 
 EXPOSE 8000
 
-# Production command with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "config.wsgi:application"]
+# Create entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# Production command with migrations
+CMD ["./entrypoint.sh"]
