@@ -24,10 +24,9 @@ const getApiBaseUrl = (): string => {
 
   // Second priority: Use build-time environment detection
   if (!isDevelopment) {
-    // Production URL will be updated after Railway deployment
-    const productionUrl = 'https://your-railway-app.railway.app/api'; // Update after deployment
+    // Production URL - your live Flash Payment API
+    const productionUrl = 'https://flashapp-production-8270.up.railway.app/api';
     console.log(`🚀 Production mode: Using Railway URL: ${productionUrl}`);
-    console.log('📝 Note: Update this URL after Railway deployment is complete');
     return productionUrl;
   }
 

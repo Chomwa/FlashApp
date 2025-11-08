@@ -48,14 +48,14 @@ echo "👤 Setting up admin user..."
 python manage.py shell << END
 from django.contrib.auth import get_user_model
 User = get_user_model()
-if not User.objects.filter(phone_number='+260999999999').exists():
+if not User.objects.filter(phone_number='+260971234567').exists():
     User.objects.create_superuser(
         username='admin',
-        phone_number='+260999999999',
+        phone_number='+260971234567',
         password='admin123',
         full_name='Flash Admin'
     )
-    print('✅ Admin user created: +260999999999 / admin123')
+    print('✅ Admin user created: +260971234567 / admin123')
 else:
     print('✅ Admin user already exists')
 END

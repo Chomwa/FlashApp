@@ -6,6 +6,7 @@ buildscript {
         minSdkVersion = 21
         compileSdkVersion = 33
         targetSdkVersion = 33
+        kotlinVersion = "1.8.10"
 
         // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
         ndkVersion = "23.1.7779620"
@@ -17,6 +18,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.4.2")
         classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 
@@ -27,3 +29,31 @@ allprojects {
         maven { url("https://www.jitpack.io") }
     }
 }
+
+// Add common configurations for all projects  
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            // Use stable versions compatible with API 33
+            force 'androidx.camera:camera-core:1.2.3'
+            force 'androidx.camera:camera-camera2:1.2.3'
+            force 'androidx.camera:camera-lifecycle:1.2.3'
+            force 'androidx.camera:camera-view:1.2.3'
+            force 'androidx.camera:camera-video:1.2.3'
+            force 'androidx.camera:camera-extensions:1.2.3'
+            
+            // Use stable lifecycle versions compatible with API 33
+            force 'androidx.lifecycle:lifecycle-common:2.6.2'
+            force 'androidx.lifecycle:lifecycle-runtime:2.6.2'
+            force 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+            force 'androidx.lifecycle:lifecycle-viewmodel:2.6.2'
+            force 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
+            force 'androidx.lifecycle:lifecycle-livedata:2.6.2'
+            force 'androidx.lifecycle:lifecycle-livedata-core:2.6.2'
+            force 'androidx.lifecycle:lifecycle-livedata-core-ktx:2.6.2'
+            force 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2'
+            force 'androidx.lifecycle:lifecycle-process:2.6.2'
+        }
+    }
+}
+

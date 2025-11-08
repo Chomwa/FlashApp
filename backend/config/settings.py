@@ -80,11 +80,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-# Railway automatically provides DATABASE_URL environment variable
+# Railway automatically provides DATABASE_URL environment variable when database is connected
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if DATABASE_URL:
-    # Production: Use Railway PostgreSQL
+if DATABASE_URL and DATABASE_URL != 'postgresql://flashuser:flashpass@localhost:5432/flashdb':
+    # Production: Use Railway PostgreSQL (when properly connected)
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -93,6 +93,18 @@ if DATABASE_URL:
         )
     }
     print(f"🔗 Using Railway database: {DATABASE_URL[:50]}...")
+    
+elif os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('PRODUCTION'):
+    # Production fallback: Use SQLite for now (until Railway database is connected)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    print("⚠️  WARNING: Using SQLite fallback in production - Railway database not connected!")
+    print("   Please add PostgreSQL database in Railway dashboard and connect to Flash service")
+    
 else:
     # Development: Use local PostgreSQL
     DATABASES = {

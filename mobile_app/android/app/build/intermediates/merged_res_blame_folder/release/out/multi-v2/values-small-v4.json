@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.flashapp-mergeReleaseResources-29:/values-small-v4/values-small-v4.xml",
+            "outputFile": "com.flashapp-mergeReleaseResources-34:/values-small-v4/values-small-v4.xml",
             "map": [
                 {
-                    "source": "/Users/chomwashikati/.gradle/caches/transforms-3/6ed83fd0f18220e5979e6984ec0c3a37/transformed/material-1.1.0/res/values-small-v4/values-small-v4.xml",
+                    "source": "/Users/chomwashikati/.gradle/caches/transforms-3/798148a9911c45bf276944d19c65e353/transformed/material-1.1.0/res/values-small-v4/values-small-v4.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",

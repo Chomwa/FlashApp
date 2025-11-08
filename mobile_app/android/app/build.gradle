@@ -83,8 +83,11 @@ android {
         applicationId "com.flashapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.1.0-backend"
+        versionCode 7
+        versionName "1.2.0-production"
+        
+        // VisionCamera configurations
+        missingDimensionStrategy 'react-native-camera', 'general'
     }
     
     buildFeatures {
@@ -132,6 +135,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    
+    // VisionCamera dependencies are handled by dependency resolution strategy
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
