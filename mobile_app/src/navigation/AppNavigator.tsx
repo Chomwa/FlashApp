@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 
 // Import screens
 import HomeScreen from '../screens/main/HomeScreen';
-import ScanScreen from '../screens/main/ScanScreen';
+import QRScannerScreen from '../screens/main/QRScannerScreen';
 import MyQRScreen from '../screens/main/MyQRScreen';
 import ActivityScreen from '../screens/main/ActivityScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
@@ -16,6 +16,11 @@ import RequestMoneyScreen from '../screens/main/RequestMoneyScreen';
 import ApprovalScreen from '../screens/main/ApprovalScreen';
 import ReceiptScreen from '../screens/main/ReceiptScreen';
 import TransactionDetailsScreen from '../screens/main/TransactionDetailsScreen';
+import RequestTrackingScreen from '../screens/main/RequestTrackingScreen';
+import RequestReviewScreen from '../screens/main/RequestReviewScreen';
+import EditProfileScreen from '../screens/main/EditProfileScreen';
+import SecuritySettingsScreen from '../screens/main/SecuritySettingsScreen';
+import InviteProgramScreen from '../screens/main/InviteProgramScreen';
 
 // Auth screens
 import OnboardingPhoneScreen from '../screens/auth/OnboardingPhoneScreen';
@@ -178,7 +183,7 @@ function MainTabs() {
       />
       <Tab.Screen 
         name="Scan" 
-        component={ScanScreen}
+        component={QRScannerScreen}
         options={{
           tabBarLabel: 'Scan',
           tabBarIcon: ({ focused, color }) => <ScanIcon focused={focused} color={color} />,
@@ -283,6 +288,46 @@ export default function AppNavigator() {
               component={TransactionDetailsScreen}
               options={{ 
                 title: 'Transaction Details',
+                presentation: 'card'
+              }}
+            />
+            <Stack.Screen 
+              name="RequestReview" 
+              component={RequestReviewScreen}
+              options={{ 
+                title: 'Review Request',
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen 
+              name="RequestTracking" 
+              component={RequestTrackingScreen}
+              options={{ 
+                title: 'Request Tracking',
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen 
+              name="EditProfile" 
+              component={EditProfileScreen}
+              options={{ 
+                title: 'Edit Profile',
+                presentation: 'card'
+              }}
+            />
+            <Stack.Screen 
+              name="SecuritySettings" 
+              component={SecuritySettingsScreen}
+              options={{ 
+                title: 'Security Settings',
+                presentation: 'card'
+              }}
+            />
+            <Stack.Screen 
+              name="InviteProgram" 
+              component={InviteProgramScreen}
+              options={{ 
+                title: 'Exclusive Invites',
                 presentation: 'card'
               }}
             />

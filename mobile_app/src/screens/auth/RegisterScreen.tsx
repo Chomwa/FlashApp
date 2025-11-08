@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { showMessage } from 'react-native-flash-message';
 import { Input, Button } from '../../ui';
 import { useAuth } from '../../context/AuthContext';
-import { validateZambianPhone, formatZambianPhone, authAPI } from '../../services/api';
+import { validateZambianPhone, formatZambianPhone, authAPI, inviteAPI } from '../../services/api';
 import { getApiErrorMessage, getPhoneValidationMessage } from '../../utils/errorHandler';
 
 const StyledView = styled(View);
@@ -25,8 +25,14 @@ export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [phoneError, setPhoneError] = useState('');
+  const [inviteCodeStatus, setInviteCodeStatus] = useState<{
+    valid: boolean | null;
+    message: string;
+    checking: boolean;
+  }>({ valid: null, message: '', checking: false });
   const { register } = useAuth();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -56,6 +62,37 @@ export default function RegisterScreen() {
       setPhoneError(errorMessage === 'Valid phone number' ? '' : errorMessage);
     } else {
       setPhoneError('');
+    }
+  };
+
+  const handleInviteCodeChange = async (text: string) => {
+    const upperText = text.toUpperCase();
+    setInviteCode(upperText);
+    
+    if (upperText.length === 0) {
+      setInviteCodeStatus({ valid: null, message: '', checking: false });
+      return;
+    }
+    
+    if (upperText.length === 6) {
+      setInviteCodeStatus({ valid: null, message: '', checking: true });
+      
+      try {
+        const result = await inviteAPI.validateInviteCode(upperText);
+        setInviteCodeStatus({
+          valid: result.valid,
+          message: result.message,
+          checking: false
+        });
+      } catch (error) {
+        setInviteCodeStatus({
+          valid: false,
+          message: 'Unable to validate invite code',
+          checking: false
+        });
+      }
+    } else {
+      setInviteCodeStatus({ valid: null, message: '', checking: false });
     }
   };
 
@@ -111,6 +148,7 @@ export default function RegisterScreen() {
         phone: formattedPhone,
         fullName,
         password,
+        inviteCode: inviteCode.trim() || undefined,
       });
       
       // Show success message
@@ -240,6 +278,36 @@ export default function RegisterScreen() {
                     placeholder="Re-enter your password"
                     secureTextEntry
                   />
+                </StyledView>
+
+                <StyledView>
+                  <StyledText className="text-white/80 text-sm font-light mb-2 ml-1">
+                    Invite Code (Optional)
+                  </StyledText>
+                  <Input
+                    value={inviteCode}
+                    onChangeText={handleInviteCodeChange}
+                    placeholder="ABC123"
+                    autoCapitalize="characters"
+                    maxLength={6}
+                  />
+                  {inviteCodeStatus.checking ? (
+                    <StyledText className="text-yellow-400 text-xs mt-1 ml-1">
+                      🔍 Checking invite code...
+                    </StyledText>
+                  ) : inviteCodeStatus.valid === true ? (
+                    <StyledText className="text-green-400 text-xs mt-1 ml-1">
+                      ✅ {inviteCodeStatus.message}
+                    </StyledText>
+                  ) : inviteCodeStatus.valid === false ? (
+                    <StyledText className="text-red-400 text-xs mt-1 ml-1">
+                      ❌ {inviteCodeStatus.message}
+                    </StyledText>
+                  ) : (
+                    <StyledText className="text-white/40 text-xs mt-1 ml-1">
+                      Have an invite code? Enter it here for exclusive access
+                    </StyledText>
+                  )}
                 </StyledView>
               </StyledView>
 

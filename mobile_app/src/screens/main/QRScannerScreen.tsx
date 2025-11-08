@@ -19,6 +19,7 @@ export default function QRScannerScreen() {
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [cameraActive, setCameraActive] = useState(true);
 
+  // Unified device handling for both platforms
   const device = useCameraDevice('back');
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function QRScannerScreen() {
   const requestCameraPermission = async () => {
     try {
       console.log('📷 Requesting camera permission...');
+      
       const cameraPermission = await Camera.requestCameraPermission();
       console.log('📷 Camera permission status:', cameraPermission);
 
@@ -58,8 +60,9 @@ export default function QRScannerScreen() {
     }
   };
 
+  // Unified code scanner for both platforms
   const codeScanner = useCodeScanner({
-    codeTypes: ['qr'],
+    codeTypes: ['qr', 'ean-13'],
     onCodeScanned: (codes) => {
       if (scanned || codes.length === 0) return;
 
@@ -157,7 +160,13 @@ export default function QRScannerScreen() {
           </StyledTouchableOpacity>
           <StyledTouchableOpacity
             className="bg-white/10 rounded-2xl py-4 px-8"
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('Home');
+              }
+            }}
           >
             <StyledText className="text-white font-semibold text-lg text-center">
               Go Back
@@ -168,14 +177,38 @@ export default function QRScannerScreen() {
     );
   }
 
+  // Check if camera device is available
   if (!device) {
     return (
       <StyledSafeAreaView className="flex-1 bg-navy items-center justify-center px-6">
-        <StyledText className="text-white text-lg">No camera device found</StyledText>
+        <StyledView className="w-20 h-20 bg-white/10 rounded-2xl items-center justify-center mb-6">
+          <StyledText className="text-white text-4xl">📷</StyledText>
+        </StyledView>
+        <StyledText className="text-white text-xl font-bold mb-4 text-center">
+          Camera Not Available
+        </StyledText>
+        <StyledText className="text-white/70 text-center mb-8">
+          No camera device found on this device
+        </StyledText>
+        <StyledTouchableOpacity
+          className="bg-sky rounded-2xl py-4 px-8"
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Home');
+            }
+          }}
+        >
+          <StyledText className="text-white font-semibold text-lg text-center">
+            Go Back
+          </StyledText>
+        </StyledTouchableOpacity>
       </StyledSafeAreaView>
     );
   }
 
+  // Unified VisionCamera for both iOS and Android
   return (
     <StyledView className="flex-1 bg-black">
       {/* Camera View */}
@@ -190,7 +223,13 @@ export default function QRScannerScreen() {
       {/* Header Overlay */}
       <SafeAreaView style={{ flex: 0, backgroundColor: 'transparent' }}>
         <StyledView className="flex-row items-center justify-between px-6 py-3 bg-black/50">
-          <StyledTouchableOpacity onPress={() => navigation.goBack()}>
+          <StyledTouchableOpacity onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('Home');
+            }
+          }}>
             <StyledView className="w-10 h-10 items-center justify-center">
               <StyledText className="text-white text-2xl">←</StyledText>
             </StyledView>

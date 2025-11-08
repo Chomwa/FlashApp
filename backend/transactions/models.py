@@ -16,6 +16,8 @@ class TransactionStatus(models.TextChoices):
     COMPLETED = 'completed', 'Completed'
     FAILED = 'failed', 'Failed'
     CANCELLED = 'cancelled', 'Cancelled'
+    DECLINED = 'declined', 'Declined'
+    EXPIRED = 'expired', 'Expired'
 
 
 class TransactionType(models.TextChoices):

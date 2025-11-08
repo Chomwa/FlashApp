@@ -40,21 +40,22 @@ export default function LoginScreen() {
   }, []);
 
   const formatPhoneNumber = (text: string) => {
-    // Remove non-numeric characters
-    const cleaned = text.replace(/\D/g, '');
+    // Remove non-numeric characters except + at start
+    const cleaned = text.replace(/[^+\d]/g, '');
     
-    // Add +260 prefix if not present
-    if (cleaned.length > 0 && !cleaned.startsWith('260')) {
-      if (cleaned.startsWith('0')) {
-        return `+260${cleaned.substring(1)}`;
-      } else if (cleaned.length <= 9) {
-        return `+260${cleaned}`;
+    // If user starts typing without +260, help them
+    if (cleaned.length > 0 && !cleaned.startsWith('+')) {
+      const numeric = cleaned.replace(/\D/g, '');
+      if (numeric.startsWith('0')) {
+        // Convert 0971234567 to +260971234567
+        return `+260${numeric.substring(1)}`;
+      } else if (numeric.length <= 9 && !numeric.startsWith('260')) {
+        // Convert 971234567 to +260971234567
+        return `+260${numeric}`;
       }
-    } else if (cleaned.startsWith('260')) {
-      return `+${cleaned}`;
     }
     
-    return text;
+    return cleaned;
   };
 
   const handlePhoneChange = (text: string) => {
@@ -155,10 +156,13 @@ export default function LoginScreen() {
                 <Input
                   value={phone}
                   onChangeText={handlePhoneChange}
-                  placeholder="+260 97 123 4567"
+                  placeholder="Enter phone number"
                   keyboardType="phone-pad"
                   autoFocus
                 />
+                <StyledText className="text-white/40 text-xs font-light mt-2 ml-1">
+                  Enter your full number (e.g., +260977777777) or just 977777777
+                </StyledText>
               </StyledView>
 
               <StyledView>

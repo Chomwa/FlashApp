@@ -53,21 +53,16 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({
       console.log('🔍 AuthContext loadUser - Token found:', token ? 'Yes' : 'No');
       
       if (token) {
-        // In development, create a mock user if we have a token
-        if (__DEV__) {
-          const mockUser: User = {
-            id: 'dev-user',
-            phone_number: '+260977999888',
-            full_name: 'OTP Test User',
-            is_phone_verified: true
-          };
-          setUser(mockUser);
-          console.log('✅ Loaded mock user for development:', mockUser);
-        } else {
-          // In production, try to get real user data
+        // Always get real user data from backend
+        try {
           const userData = await authAPI.getCurrentUser();
           setUser(userData);
-          console.log('✅ Loaded user from API:', userData);
+          console.log('✅ Loaded authenticated user:', userData);
+        } catch (error) {
+          console.error('❌ Failed to load user data:', error);
+          // Clear invalid token
+          await AsyncStorage.removeItem('auth_token');
+          setUser(null);
         }
       } else {
         console.log('ℹ️ No auth token found - user remains null');

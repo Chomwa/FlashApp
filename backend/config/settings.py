@@ -16,7 +16,15 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-flash-payment-app-dev
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '10.0.2.2']
+
+# Production hosts (will be set via environment variable)
+if os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('PRODUCTION'):
+    ALLOWED_HOSTS = ['*']  # Railway handles this securely
+    
+# Custom domain support
+if os.environ.get('CUSTOM_DOMAIN'):
+    ALLOWED_HOSTS.append(os.environ.get('CUSTOM_DOMAIN'))
 
 # Application definition
 INSTALLED_APPS = [
@@ -42,6 +50,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Production static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -185,3 +194,49 @@ LOGGING = {
         },
     },
 }
+
+# Production Security Settings
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = 'DENY'
+
+# Static files (CSS, JavaScript, Images) - Production
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Production CORS settings
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "https://your-production-domain.com",  # Update this with your actual domain
+    ]
+    # Add production mobile app origins if needed
+    
+# Sentry Error Monitoring (Production)
+if os.environ.get('SENTRY_DSN') and not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    
+    sentry_sdk.init(
+        dsn=os.environ.get('SENTRY_DSN'),
+        integrations=[
+            DjangoIntegration(auto_enabling_integrations=False),
+            CeleryIntegration(),
+        ],
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+        environment="production",
+    )

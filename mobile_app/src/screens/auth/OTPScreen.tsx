@@ -17,7 +17,7 @@ export default function OTPScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { register } = useAuth();
-  const { phone, fullName, password, debugCode } = route.params || {};
+  const { phone, fullName, password, inviteCode, debugCode } = route.params || {};
   
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -88,7 +88,7 @@ export default function OTPScreen() {
     try {
       // Step 1: Verify OTP first
       const { authAPI } = require('../../services/api');
-      await authAPI.verifyOTP(phone, code, fullName);
+      await authAPI.verifyOTP(phone, code, fullName, inviteCode);
       
       // Step 2: Complete registration (without OTP code since it's already verified)
       await register(phone, password, fullName);

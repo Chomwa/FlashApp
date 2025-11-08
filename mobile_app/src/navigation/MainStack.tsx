@@ -6,6 +6,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from '../screens/main/HomeScreen';
 import TransactionsScreen from '../screens/main/TransactionsScreen';
 import ContactsScreen from '../screens/main/ContactsScreen';
+import RequestsScreen from '../screens/main/RequestsScreen';
+import RequestTrackingScreen from '../screens/main/RequestTrackingScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import SendMoneyScreen from '../screens/main/SendMoneyScreen';
 import ReceiveMoneyScreen from '../screens/main/ReceiveMoneyScreen';
@@ -17,7 +19,7 @@ import AddContactScreen from '../screens/main/AddContactScreen';
 export type MainTabParamList = {
   Home: undefined;
   Transactions: undefined;
-  Contacts: undefined;
+  Requests: undefined;
   Profile: undefined;
 };
 
@@ -32,8 +34,17 @@ export type MainStackParamList = {
   ReceiveMoney: undefined;
   QRScanner: undefined;
   TransactionDetails: {transactionId: string};
+  RequestTracking: {
+    requestId: string;
+    transactionId: string;
+    amount: string;
+    recipientName: string;
+    recipientPhone: string;
+    qrCode?: string;
+  };
   EditProfile: undefined;
   AddContact: undefined;
+  Contacts: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -53,8 +64,8 @@ const MainTabs = () => {
             case 'Transactions':
               iconName = 'receipt';
               break;
-            case 'Contacts':
-              iconName = 'contacts';
+            case 'Requests':
+              iconName = 'request-page';
               break;
             case 'Profile':
               iconName = 'person';
@@ -71,7 +82,7 @@ const MainTabs = () => {
       })}>
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Transactions" component={TransactionsScreen} />
-      <Tab.Screen name="Contacts" component={ContactsScreen} />
+      <Tab.Screen name="Requests" component={RequestsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -113,6 +124,16 @@ const MainStack = () => {
       <Stack.Screen
         name="AddContact"
         component={AddContactScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Contacts"
+        component={ContactsScreen}
+        options={{title: 'Contacts'}}
+      />
+      <Stack.Screen
+        name="RequestTracking"
+        component={RequestTrackingScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

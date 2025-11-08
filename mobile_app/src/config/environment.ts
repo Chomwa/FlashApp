@@ -24,20 +24,24 @@ const getApiBaseUrl = (): string => {
 
   // Second priority: Use build-time environment detection
   if (!isDevelopment) {
-    const productionUrl = 'https://api.flashapp.com/api'; // TODO: Replace with actual domain
-    console.warn(`⚠️ Using placeholder production URL: ${productionUrl}`);
-    console.warn('🚨 PRODUCTION WILL FAIL - Update this URL before deploying!');
+    // Production URL will be updated after Railway deployment
+    const productionUrl = 'https://your-railway-app.railway.app/api'; // Update after deployment
+    console.log(`🚀 Production mode: Using Railway URL: ${productionUrl}`);
+    console.log('📝 Note: Update this URL after Railway deployment is complete');
     return productionUrl;
   }
 
   // Development fallback - platform-specific URLs
   if (Platform.OS === 'ios') {
-    console.log('📱 iOS Development: Using 127.0.0.1:8002');
-    return 'http://127.0.0.1:8002/api';
+    // For iOS Simulator, localhost works fine
+    const developmentUrl = 'http://localhost:8002/api';
+    console.log('📱 iOS Development: Using localhost:8002');
+    return developmentUrl;
   } else {
-    console.log('🤖 Android Development: Using localhost:8002 (requires adb reverse)');
-    console.log('💡 Run: adb reverse tcp:8002 tcp:8002');
-    return 'http://localhost:8002/api';
+    // For Android emulator, use 10.0.2.2 which maps to host machine
+    console.log('🤖 Android Development: Using 10.0.2.2:8002 for emulator');
+    console.log('💡 10.0.2.2 is the special IP for host machine from Android emulator');
+    return 'http://10.0.2.2:8002/api';
   }
 };
 

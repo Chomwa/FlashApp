@@ -138,6 +138,33 @@ export default function SendMoneyScreen() {
     }
   };
 
+  const handleRequestMoney = () => {
+    if (!phone || !amount || !user) {
+      return;
+    }
+
+    // Navigate to review screen first
+    navigation.navigate('RequestReview', {
+      phone,
+      amount,
+      message,
+      selectedContact
+    });
+  };
+
+  const generateQRForRequest = () => {
+    // Navigate to MyQR tab - it will automatically generate QR for current user
+    // The user can set the amount in MyQRScreen
+    navigation.navigate('MyQR');
+    
+    // Show a helpful message
+    Alert.alert(
+      'Generate QR Code',
+      'You can now set the amount you want to request and share your QR code.',
+      [{ text: 'OK' }]
+    );
+  };
+
   const handleContinue = async () => {
     if (!phone || !amount) {
       return;
@@ -145,12 +172,18 @@ export default function SendMoneyScreen() {
 
     // Check if user is authenticated before making API call
     if (!user) {
-      Alert.alert('Authentication Required', 'Please log in to send money.', [
+      Alert.alert('Authentication Required', `Please log in to ${activeTab === 'send' ? 'send' : 'request'} Flash.`, [
         {
           text: 'OK',
           onPress: () => navigation.navigate('Welcome')
         }
       ]);
+      return;
+    }
+
+    // Handle receive/request mode
+    if (activeTab === 'receive') {
+      handleRequestMoney();
       return;
     }
 
@@ -372,7 +405,10 @@ export default function SendMoneyScreen() {
               <StyledText className="text-sky text-sm">Favorites</StyledText>
             </StyledTouchableOpacity>
             
-            <StyledTouchableOpacity className="items-center">
+            <StyledTouchableOpacity 
+              className="items-center"
+              onPress={() => navigation.navigate('Scan')}
+            >
               <StyledView className="w-12 h-12 bg-emerald rounded-full items-center justify-center mb-2">
                 <StyledText className="text-white text-lg">📱</StyledText>
               </StyledView>
@@ -473,7 +509,7 @@ export default function SendMoneyScreen() {
           </StyledView>
         ) : null}
         <Button
-          title={sending ? "Processing..." : user ? "Send Money" : "Log In Required"}
+          title={sending ? "Processing..." : user ? (activeTab === 'send' ? "Send Flash" : "Ask for Flash") : "Log In Required"}
           onPress={handleContinue}
           disabled={!phone || !amount || sending || !user}
           loading={sending}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, Linking, Platform, StyleSheet } from 'react-native';
 import { styled } from 'nativewind';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Camera, useCameraDevices } from 'react-native-vision-camera';
 import { Button } from '../../ui';
 
 const StyledView = styled(View);
@@ -12,90 +13,167 @@ const StyledSafeAreaView = styled(SafeAreaView);
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  
+  const devices = useCameraDevices();
+  const device = devices.back;
 
   useEffect(() => {
-    // Camera permission logic would go here
-    // For now, we'll simulate permission granted
-    setHasPermission(true);
+    const requestCameraPermission = async () => {
+      const permission = await Camera.requestCameraPermission();
+      console.log('📷 Camera permission:', permission);
+      setHasPermission(permission === 'authorized');
+    };
+    
+    requestCameraPermission();
   }, []);
+
+  const handleManualQREntry = () => {
+    Alert.prompt(
+      'Enter QR Code Data',
+      'Paste or enter QR code data manually:',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Continue',
+          onPress: (data) => {
+            if (data) {
+              handleQRScanned(data);
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
+  };
 
   const handleQRScanned = (data: string) => {
     try {
+      console.log('📱 QR Code data:', data);
       const qrData = JSON.parse(data);
-      if (qrData?.action === 'receive' && qrData?.phone) {
-        navigation.navigate('SendMoney', { 
-          recipient: { 
-            phone: qrData.phone,
-            name: qrData.name || 'QR Contact'
-          }
-        });
+      
+      // Check for Flash payment QR format
+      if (qrData?.type === 'flash_payment' && qrData?.phone) {
+        Alert.alert(
+          'Flash Payment QR Code',
+          `Send money to ${qrData.name || qrData.phone}?`,
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Continue',
+              onPress: () => {
+                navigation.navigate('SendMoney', { 
+                  recipient: { 
+                    phone: qrData.phone,
+                    name: qrData.name || 'QR Contact',
+                    amount: qrData.amount
+                  }
+                });
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Invalid QR Code', 'This QR code is not a valid Flash payment code.');
       }
     } catch (e) {
-      Alert.alert('Invalid QR Code', 'This QR code is not recognized by Flash.');
+      console.error('❌ QR scan error:', e);
+      Alert.alert('Invalid QR Code', 'Could not read QR code data.');
     }
   };
 
-  if (hasPermission === null) {
+  if (!hasPermission) {
     return (
       <StyledSafeAreaView className="flex-1 bg-navy items-center justify-center">
-        <StyledText className="text-white">Requesting camera permission...</StyledText>
-      </StyledSafeAreaView>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <StyledSafeAreaView className="flex-1 bg-navy items-center justify-center px-6">
-        <StyledText className="text-white text-xl font-bold mb-4">
+        <StyledText className="text-white text-lg font-semibold mb-4">
           Camera Permission Required
         </StyledText>
-        <StyledText className="text-white/70 text-center mb-6">
-          Please allow camera access to scan QR codes for payments.
+        <StyledText className="text-white/90 text-center mb-6 px-6">
+          Flash needs camera access to scan QR codes for payments
         </StyledText>
         <Button
-          title="Open Settings"
-          onPress={() => {/* Open device settings */}}
+          title="Grant Permission"
+          onPress={async () => {
+            const permission = await Camera.requestCameraPermission();
+            setHasPermission(permission === 'authorized');
+          }}
         />
       </StyledSafeAreaView>
     );
   }
 
+  if (!device) {
+    return (
+      <StyledSafeAreaView className="flex-1 bg-navy items-center justify-center">
+        <StyledText className="text-white text-lg font-semibold">
+          No Camera Available
+        </StyledText>
+      </StyledSafeAreaView>
+    );
+  }
+
+
   return (
     <StyledSafeAreaView className="flex-1 bg-navy">
-      <StyledView className="flex-1">
-        {/* Camera View Placeholder */}
-        <StyledView className="flex-1 bg-black relative">
-          <StyledView className="absolute inset-0 items-center justify-center">
-            <StyledView className="w-64 h-64 border-2 border-white rounded-2xl">
-              <StyledView className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-emerald rounded-tl-lg" />
-              <StyledView className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-emerald rounded-tr-lg" />
-              <StyledView className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-emerald rounded-bl-lg" />
-              <StyledView className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-emerald rounded-br-lg" />
-            </StyledView>
-          </StyledView>
-          
-          {/* Instructions */}
-          <StyledView className="absolute bottom-32 left-0 right-0 px-6">
-            <StyledText className="text-white text-lg font-semibold text-center mb-2">
-              Scan QR Code
-            </StyledText>
-            <StyledText className="text-white/70 text-center">
-              Point your camera at a Flash QR code to send money
-            </StyledText>
-          </StyledView>
-        </StyledView>
+      {/* Header */}
+      <StyledView className="items-center p-6">
+        <StyledText className="text-white text-lg font-semibold text-center mb-2">
+          QR Code Scanner
+        </StyledText>
+        <StyledText className="text-white/90 text-center">
+          Use the camera to scan Flash QR codes or enter data manually
+        </StyledText>
+      </StyledView>
 
-        {/* Bottom Controls */}
-        <StyledView className="p-6 bg-navy">
-          <StyledView className="flex-row justify-center space-x-4">
-            <StyledTouchableOpacity className="bg-charcoal p-4 rounded-xl">
-              <StyledText className="text-white font-medium">Gallery</StyledText>
-            </StyledTouchableOpacity>
-            <StyledTouchableOpacity className="bg-charcoal p-4 rounded-xl">
-              <StyledText className="text-white font-medium">Flash</StyledText>
-            </StyledTouchableOpacity>
-          </StyledView>
+      {/* Camera View */}
+      <StyledView className="flex-1 relative">
+        <Camera
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={true}
+        />
+        
+        {/* QR Code Marker Overlay */}
+        <StyledView className="flex-1 items-center justify-center">
+          <StyledView 
+            className="w-64 h-64 border-2 border-emerald rounded-2xl"
+            style={{
+              borderColor: '#10B981',
+              backgroundColor: 'transparent',
+            }}
+          />
+          <StyledText className="text-white/80 mt-4 text-center px-6">
+            Align QR code within the frame{'\n'}
+            Camera scanning is temporarily manual - use the button below
+          </StyledText>
+        </StyledView>
+      </StyledView>
+
+      {/* Bottom Controls */}
+      <StyledView className="p-6">
+        <StyledView className="space-y-3">
+          <StyledTouchableOpacity 
+            className="bg-emerald p-4 rounded-xl"
+            onPress={handleManualQREntry}
+          >
+            <StyledText className="text-white font-medium text-center">
+              Enter QR Code Data
+            </StyledText>
+          </StyledTouchableOpacity>
+          <StyledTouchableOpacity 
+            className="bg-charcoal p-4 rounded-xl"
+            onPress={() => navigation.goBack()}
+          >
+            <StyledText className="text-white font-medium text-center">
+              Cancel
+            </StyledText>
+          </StyledTouchableOpacity>
         </StyledView>
       </StyledView>
     </StyledSafeAreaView>

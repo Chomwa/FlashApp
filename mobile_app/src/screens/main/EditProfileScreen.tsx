@@ -59,12 +59,12 @@ export default function EditProfileScreen() {
         updateData.email = email.trim();
       }
 
-      const response = await api.patch('/auth/me/', updateData);
+      const response = await api.patch('/auth/update-profile/', updateData);
       console.log('✅ Profile updated successfully:', response.data);
 
       // Update user in auth context
       if (updateUser) {
-        updateUser(response.data);
+        updateUser(response.data.user);
       }
 
       Alert.alert(

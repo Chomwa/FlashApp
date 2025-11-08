@@ -100,7 +100,7 @@ export default function ProfileScreen() {
     { icon: '📱', title: 'Phone & Security', subtitle: 'Change phone, PIN, biometrics' },
     { icon: '💳', title: 'KYC Verification', subtitle: 'Increase your limits', badge: 'Tier 1' },
     { icon: '📊', title: 'Transaction Limits', subtitle: 'View your daily limits' },
-    { icon: '🎁', title: 'Referral Program', subtitle: 'Invite friends, earn rewards' },
+    { icon: '⭐', title: 'Referral Program', subtitle: 'Share invites with friends', badge: '5 left' },
     { icon: '💬', title: 'Support & Help', subtitle: 'Get help with your account' },
     { icon: '📄', title: 'Terms & Privacy', subtitle: 'Legal information' },
   ];
@@ -143,19 +143,21 @@ export default function ProfileScreen() {
         navigation.navigate('EditProfile');
         break;
       case 'Phone & Security':
-        // TODO: Navigate to security settings
-        Alert.alert('Coming Soon', 'Security settings will be available soon!');
+        navigation.navigate('SecuritySettings');
         break;
-      case 'Payment Methods':
-        Alert.alert('Coming Soon', 'Payment methods management coming soon!');
+      case 'KYC Verification':
+        Alert.alert('Coming Soon', 'KYC verification will be available soon!');
         break;
       case 'Transaction Limits':
         Alert.alert('Transaction Limits', `Daily Limit: ZMW ${walletData?.daily_limit || '5,000'}\nDaily Spent: ZMW ${walletData?.daily_spent || '0'}`);
         break;
-      case 'Help & Support':
+      case 'Referral Program':
+        navigation.navigate('InviteProgram');
+        break;
+      case 'Support & Help':
         Alert.alert('Help & Support', 'For assistance, please contact support@flashpay.zm');
         break;
-      case 'Legal & Privacy':
+      case 'Terms & Privacy':
         Alert.alert('Coming Soon', 'Terms and privacy policy coming soon!');
         break;
       default:

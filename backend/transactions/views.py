@@ -1,7 +1,7 @@
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db import models
@@ -48,6 +48,157 @@ class P2PTransactionViewSet(viewsets.ReadOnlyModelViewSet):
         return P2PTransaction.objects.filter(
             models.Q(transaction__sender=user) | models.Q(transaction__recipient=user)
         ).order_by('-created_at')
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """Approve a payment request"""
+        try:
+            p2p_transaction = self.get_object()
+            transaction = p2p_transaction.transaction
+            
+            # Verify this is a payment request that can be approved
+            if not p2p_transaction.is_payment_request:
+                return Response(
+                    {'error': 'This is not a payment request'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verify the current user is the one who should pay (sender)
+            if transaction.sender != request.user:
+                return Response(
+                    {'error': 'You are not authorized to approve this request'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Check if request is still pending
+            if transaction.status != TransactionStatus.PENDING:
+                return Response(
+                    {'error': f'Request is already {transaction.status.lower()}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if request has expired
+            if p2p_transaction.request_expires_at and p2p_transaction.request_expires_at < timezone.now():
+                transaction.status = TransactionStatus.EXPIRED
+                transaction.save()
+                return Response(
+                    {'error': 'This payment request has expired'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create a new send transaction to fulfill this request
+            try:
+                # Get sender wallet
+                sender_wallet, _ = Wallet.objects.get_or_create(user=request.user)
+                
+                # Check if sender can spend
+                if not sender_wallet.can_spend(transaction.amount):
+                    return Response(
+                        {'error': 'Insufficient balance or daily limit exceeded'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Route payment through payment orchestrator
+                payment_request = PaymentRouter.create_payment_request(
+                    sender=request.user.phone_number,
+                    recipient=transaction.recipient_phone,
+                    amount=float(transaction.amount),
+                    currency=transaction.currency,
+                    note=f"Fulfilling payment request: {transaction.description}",
+                    external_id=transaction.reference_id
+                )
+                
+                logger.info(f"Approving payment request: {request.user.phone_number} -> {transaction.recipient_phone}, Amount: {transaction.amount}")
+                
+                # Submit to payment provider via router
+                payment_result = PaymentRouter.send_payment(payment_request)
+                
+                # Update transaction status
+                transaction.status = TransactionStatus.PROCESSING
+                transaction.provider_transaction_id = payment_result.get("external_id")
+                transaction.payment_rail = payment_result.get("provider_used", "UNKNOWN").upper()
+                transaction.provider_response = payment_result
+                transaction.save()
+                
+                # Track spending in wallet
+                sender_wallet.debit(transaction.amount, f"Payment to {transaction.recipient_phone}")
+                
+                # Credit recipient wallet if user exists (for tracking)
+                if transaction.recipient:
+                    recipient_wallet, _ = Wallet.objects.get_or_create(user=transaction.recipient)
+                    recipient_wallet.credit(transaction.amount, f"Payment from {request.user.display_name}")
+                
+                return Response({
+                    'message': 'Payment request approved and payment initiated',
+                    'transaction_id': str(transaction.id),
+                    'provider_reference': payment_result.get("external_id"),
+                    'provider': payment_result.get("provider_used"),
+                    'status': 'processing'
+                }, status=status.HTTP_200_OK)
+                
+            except PaymentProviderError as e:
+                logger.error(f"Payment provider error: {str(e)}")
+                transaction.status = TransactionStatus.FAILED
+                transaction.failure_reason = str(e)
+                transaction.save()
+                
+                return Response(
+                    {'error': f'Payment failed: {str(e)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except Exception as e:
+            logger.error(f"Error approving payment request: {str(e)}")
+            return Response(
+                {'error': 'Failed to approve payment request'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def decline(self, request, pk=None):
+        """Decline a payment request"""
+        try:
+            p2p_transaction = self.get_object()
+            transaction = p2p_transaction.transaction
+            
+            # Verify this is a payment request that can be declined
+            if not p2p_transaction.is_payment_request:
+                return Response(
+                    {'error': 'This is not a payment request'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Verify the current user is the one who should pay (sender)
+            if transaction.sender != request.user:
+                return Response(
+                    {'error': 'You are not authorized to decline this request'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Check if request is still pending
+            if transaction.status != TransactionStatus.PENDING:
+                return Response(
+                    {'error': f'Request is already {transaction.status.lower()}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update transaction status
+            reason = request.data.get('reason', 'Declined by user')
+            transaction.status = TransactionStatus.DECLINED
+            transaction.failure_reason = reason
+            transaction.save()
+            
+            return Response({
+                'message': 'Payment request declined',
+                'transaction_id': str(transaction.id)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error declining payment request: {str(e)}")
+            return Response(
+                {'error': 'Failed to decline payment request'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class WalletView(generics.RetrieveAPIView):
@@ -194,7 +345,7 @@ class RequestMoneyView(generics.CreateAPIView):
             amount=amount,
             sender=payer,
             recipient=recipient,
-            recipient_phone=payer_phone,
+            recipient_phone=recipient.phone_number,
             description=description,
             status=TransactionStatus.PENDING
         )

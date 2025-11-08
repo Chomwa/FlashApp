@@ -239,7 +239,7 @@ export const authAPI = {
     }
   },
 
-  verifyOTP: async (phone_number: string, otp_code: string, full_name?: string) => {
+  verifyOTP: async (phone_number: string, otp_code: string, full_name?: string, invite_code?: string) => {
     if (ENABLE_MOCK_MODE) {
       try {
         mockApiService.setOfflineMode(true);
@@ -250,11 +250,17 @@ export const authAPI = {
     }
 
     try {
-      const response = await api.post('/auth/verify-otp/', {
+      const requestData: any = {
         phone_number,
         otp_code,
         full_name,
-      });
+      };
+      
+      if (invite_code) {
+        requestData.invite_code = invite_code;
+      }
+      
+      const response = await api.post('/auth/verify-otp/', requestData);
       return response.data;
     } catch (error) {
       if (ENABLE_MOCK_MODE) {
@@ -428,7 +434,36 @@ export const transactionsAPI = {
       throw error;
     }
   },
+
+  // Payment Requests API
+  getPaymentRequests: async () => {
+    try {
+      const response = await api.get('/transactions/p2p/');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  approvePaymentRequest: async (requestId: string) => {
+    try {
+      const response = await api.post(`/transactions/p2p/${requestId}/approve/`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  declinePaymentRequest: async (requestId: string, reason?: string) => {
+    try {
+      const response = await api.post(`/transactions/p2p/${requestId}/decline/`, { reason });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
+
 
 // Payments API
 export const paymentsAPI = {
@@ -501,6 +536,103 @@ export const contactsAPI = {
       throw error;
     }
   },
+};
+
+// Invite/Referral API
+export const inviteAPI = {
+  validateInviteCode: async (invite_code: string) => {
+    try {
+      const response = await api.post('/auth/validate-invite/', { invite_code });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getInviteData: async () => {
+    try {
+      const response = await api.get('/auth/invite-data/');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  generateInviteCode: async () => {
+    try {
+      const response = await api.post('/auth/generate-invite/');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  sendInvite: async (data: { phone_number: string; message?: string }) => {
+    try {
+      const response = await api.post('/auth/send-invite/', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getInviteHistory: async () => {
+    try {
+      const response = await api.get('/auth/invite-history/');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  validateInviteCode: async (invite_code: string) => {
+    try {
+      const response = await api.post('/auth/validate-invite/', { invite_code });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+};
+
+// Profile API
+export const profileAPI = {
+  updateProfile: async (data: {
+    full_name?: string;
+    email?: string;
+    date_of_birth?: string;
+    address?: string;
+    id_number?: string;
+  }) => {
+    try {
+      const response = await api.patch('/auth/profile/', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  changePin: async (data: { current_pin: string; new_pin: string }) => {
+    try {
+      const response = await api.post('/auth/change-pin/', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateSecuritySettings: async (data: {
+    biometrics_enabled?: boolean;
+    auto_lock_enabled?: boolean;
+    auto_lock_time?: number;
+  }) => {
+    try {
+      const response = await api.patch('/auth/security-settings/', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 };
 
 export default api;
