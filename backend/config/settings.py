@@ -80,11 +80,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://flashuser:flashpass@localhost:5432/flashdb'
-    )
-}
+# Railway automatically provides DATABASE_URL environment variable
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Production: Use Railway PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+    print(f"🔗 Using Railway database: {DATABASE_URL[:50]}...")
+else:
+    # Development: Use local PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default='postgresql://flashuser:flashpass@localhost:5432/flashdb'
+        )
+    }
+    print("🏠 Using local database for development")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

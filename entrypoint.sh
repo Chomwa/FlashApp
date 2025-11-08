@@ -3,9 +3,43 @@
 echo "🚀 Flash Payment App - Starting Production Deployment"
 echo "==============================================="
 
+# Debug environment variables
+echo "🔍 Environment Debug:"
+echo "   DATABASE_URL: ${DATABASE_URL:0:50}..."
+echo "   RAILWAY_ENVIRONMENT: $RAILWAY_ENVIRONMENT"
+echo "   DEBUG: $DEBUG"
+
 # Wait for database to be ready
-echo "⏳ Waiting for database..."
-sleep 10
+echo "⏳ Waiting for database to be ready..."
+sleep 15
+
+# Test database connectivity
+echo "🔌 Testing database connectivity..."
+python -c "
+import os
+import psycopg2
+from urllib.parse import urlparse
+
+db_url = os.environ.get('DATABASE_URL')
+if db_url:
+    try:
+        url = urlparse(db_url)
+        conn = psycopg2.connect(
+            host=url.hostname,
+            port=url.port,
+            user=url.username,
+            password=url.password,
+            database=url.path[1:]
+        )
+        conn.close()
+        print('✅ Database connection successful')
+    except Exception as e:
+        print(f'❌ Database connection failed: {e}')
+        exit(1)
+else:
+    print('❌ No DATABASE_URL provided')
+    exit(1)
+"
 
 # Run database migrations
 echo "📊 Running database migrations..."
