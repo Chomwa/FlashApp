@@ -58,7 +58,7 @@ class MTNZambiaProvider(IPaymentProvider):
     MTN Zambia Mobile Money provider
     
     Supports MTN MoMo transactions in Zambia using Collections and Disbursement APIs.
-    Handles phone numbers starting with +26097 and +26076.
+    Handles phone numbers starting with +26096 and +26076.
     """
     
     name = "mtn-zambia"
@@ -73,15 +73,15 @@ class MTNZambiaProvider(IPaymentProvider):
         """
         Check if phone number is supported by MTN Zambia
         
-        MTN Zambia prefixes: +26097, +26076
+        MTN Zambia prefixes: +26096, +26076
         """
         if not msisdn.startswith('+260'):
             return False
         
-        # Extract network prefix (97, 76)
+        # Extract network prefix (96, 76)
         if len(msisdn) >= 8:
-            prefix = msisdn[4:6]  # Characters after +260
-            return prefix in ['97', '76']
+            prefix = msisdn[4:6]  # Characters after +260 (2 digits)
+            return prefix in ['96', '76']
         
         return False
     
@@ -89,7 +89,7 @@ class MTNZambiaProvider(IPaymentProvider):
         """Validate MTN Zambia phone number format"""
         return (
             msisdn.startswith('+260') and 
-            len(msisdn) == 13 and  # +260971234567 = 13 chars
+            len(msisdn) == 13 and  # +260963254253 = 13 chars
             self.supports(msisdn)
         )
     

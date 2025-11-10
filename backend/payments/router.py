@@ -11,6 +11,7 @@ from decimal import Decimal
 
 from .providers.base import IPaymentProvider, PaymentRequest, PaymentStatusResponse, PaymentProviderError
 from .providers.mtn_zambia import MTNZambiaProvider
+from .providers.airtel_zambia import AirtelZambiaProvider
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ class PaymentRouter:
     # Registry of all available payment providers
     _providers: List[IPaymentProvider] = [
         MTNZambiaProvider(),
+        AirtelZambiaProvider(),
         # Future providers will be added here:
-        # AirtelZambiaProvider(),
         # MTNGhanaProvider(),
         # StandardBankProvider(),
     ]
